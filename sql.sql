@@ -84,7 +84,9 @@ LIMIT 10;
 
 -- выбрать 10 наиболее популярных авторов за последний квартал с сортировкой по популярности и отображением до трёх самых популярных книг по каждому автору
 -- NOT DONE
-SELECT concat(a.first_name, ' ', a.last_name) as name, b.title
+with author_popularity as(
+SELECT concat(a.first_name, ' ', a.last_name) as name, b.title,
+       row_number() over (partition by concat(a.first_name, ' ', a.last_name) order by count(bl.id)) as row_num
 FROM author a
          JOIN books_authors ba ON ba.author_id = a.id
          JOIN book b ON ba.book_id = b.id
@@ -93,8 +95,13 @@ FROM author a
 WHERE bl.lend_date between date_trunc('quarter', current_date) - interval '3 month'
           and date_trunc('quarter', current_date)
 GROUP BY a.first_name, a.last_name, b.title
+
 ORDER BY count(bl.id) desc
-LIMIT 10;
+LIMIT 10)
+SELECT name, string_agg(title, ', ') FROM author_popularity
+WHERE row_num in (1, 2, 3)
+GROUP BY name;
+-- найти популярные книги каждого писателя в лимите трёх и вывести
 
 --выбрать 100 наиболее активных читателей (по количеству взятых книг)
 SELECT concat(r.first_name, ' ', r.last_name) as name, count(bl.id)
@@ -160,14 +167,14 @@ SELECT count(*) as count_books FROM book;
 
 SELECT count(*) as count_books_copy FROM book_copy;
 
-explain SELECT count(*) as authors FROM author;
+SELECT count(*) as authors FROM author;
 
 SELECT concat(a.first_name, ' ', a.last_name) as full_name, count(ba.book_id) as count_books
 FROM author a JOIN books_authors ba ON a.id = ba.author_id
 GROUP BY a.first_name, a.last_name
 ORDER BY count_books desc ;
 
-SELECT concat(a.first_name, ' ', a.last_name) as full_name, count(bc.id) as count_books_copy
+explain analyze SELECT concat(a.first_name, ' ', a.last_name) as full_name, count(bc.id) as count_books_copy
 FROM author a JOIN books_authors ba ON a.id = ba.author_id
 JOIN book_copy bc ON bc.book_id = ba.book_id
 GROUP BY a.first_name, a.last_name
