@@ -1,1 +1,1 @@
-docker run --name database -e POSTGRES_PASSWORD=19731302 -d -v pgdata:/var/lib/postgresql/data -p 5432:5432 postgres
+docker run --name database -e POSTGRES_PASSWORD=12345 -d -v pgdata:/var/lib/postgresql/data -p 5432:5432 postgres
